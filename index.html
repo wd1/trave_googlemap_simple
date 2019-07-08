@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Autocomplete Places Search Box using Google Maps JavaScript API by CodexWorld</title>
+<meta charset="utf-8">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="./bootstrap/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
+    <link rel="stylesheet" type="text/css" href="./bootstrap/css/jquery.timepicker.css" />
+    
+<style>
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+#map {
+	height: 640px;
+}
+
+#menu{
+    border: 1px solid black;
+}
+.controls {
+	margin-top: 10px;
+	border: 1px solid transparent;
+	border-radius: 2px 0 0 2px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	height: 32px;
+	outline: none;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.date_hand {
+    cursor: crosshair;
+}
+#searchInput {
+	background-color: #fff;
+	font-family: Roboto;
+	font-size: 15px;
+	font-weight: 300;
+	margin-left: 12px;
+	padding: 0 11px 0 13px;
+	text-overflow: ellipsis;
+	width: 50%;
+}
+#searchInput:focus {
+ 	border-color: #4d90fe;
+}
+
+#accommodation img{
+    width: 30px;
+}
+#transportation img{
+    width: 30px;
+}
+#set_time{
+    background: url('Pins/Yellow paper.png');
+    height: 640px;
+    padding:10px 0px 0px 10px;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    /*position: absolute;*/
+}
+.info_image {
+    
+}
+</style>
+</head>
+<body>
+    <div class="control-group">
+        <div class="input-append date col-md-4" id="before_datetime" data-date="" data-date-format="DD MM dd yyyy" onclick="ToYesterday()">
+            <input size="16" type="text" value="" readonly style="height:30px;cursor: pointer;">
+            <span class="add-on" style="height:30px; visibility:hidden;"><i class="icon-th" ></i></span>
+        </div>
+        <div class="col-md-4">
+            <div class="input-append date" id="form_datetime" data-date="" data-date-format="DD MM dd yyyy" style="margin: auto;width: 185px;" onclick="ToToday()">
+                <input size="16" type="text" value="" readonly style="height:30px;cursor: pointer;">
+                <span class="add-on" style="height:30px;"><i class="icon-th" ></i></span>
+            </div>
+        </div>
+        <div class="input-append date col-md-4" id="next_datetime" data-date="" data-date-format="DD MM dd yyyy" onclick="ToTomorrow()">
+            <input size="16" type="text" value="" readonly style="height:30px;float:right;cursor: pointer;">
+             <span class="add-on" style="height:30px; visibility:hidden;"><i class="icon-th" ></i></span>
+        </div>
+    </div>
+    <input id="searchInput" class="controls" type="text" placeholder="Enter a location">
+    <div id="menu" class="col-md-3">
+        <!--<div class="">
+            <input id="pintoggle" type="checkbox" onchange="pinToggle(this)"><span>All Pins</span>
+        </div>-->
+        <div class="">
+            <input id="transportationtoggle" type="checkbox" onchange="transportationToggle(this)">Transportation
+        </div>
+        <!--<div class="">
+            <input id="accommodationtoggle" type="checkbox" onchange="accommodationToggle(this)">Accommodation
+        </div>
+        <div class="">
+            <input id="activitytoggle" type="checkbox" onchange="activityToggle(this)">Activity
+        </div>-->
+        <div id="set_time">
+            <div class="" style="padding: 20px 0px;">
+                <p id="current_place" style="text-align: center;font-size: 26px;">Name of Place</p>
+            </div>
+            <div class="row" style="padding: 20px 0px;">
+                <img id="info_acc" class="info_image" src="Pins/Accommodation.png" style="width:60px;margin-left: 85px;">
+                <img id="info_act" class="info_image"    src="Pins/Activity.png" style="width:60px;margin-left: 60px;">
+                <img id="info_trans" class="info_image" src="Pins/transportation.png" style="width:60px;margin-left: 60px;">
+            </div>
+            <input id="depart_t" type="text" class="time col-md-5" placeholder="Depart" disabled/>
+            <input id="arrive_t" type="text" class="time col-md-5" placeholder="Arrive" disabled />
+            <button onclick="setTime()">&#10004;</button>
+            <textarea id="comment_content" type="text" class="" placeholder="Information" disabled onChange="commentChange()" style="width:95%;"></textarea>
+            
+            <form action="handler.php" method="post" enctype="multipart/form-data" id="MyUploadForm">
+            <input name="FileInput" id="FileInput" type="file" disabled />
+            <input type="submit"  id="submit-btn" value="Upload" disabled />
+            <img src="images/ajax-loader.gif" id="loading-img" style="display:none;" alt="Please Wait"/>
+            </form>
+            <div id="progressbox" ><div id="progressbar"></div ><div id="statustxt">0%</div></div>
+            <div id="output" style="display:none;"></div>
+            <img id="out_image" src="" style="width:95%;"/>
+            
+        </div>
+    </div>
+    <div id="map" class="col-md-9"></div>
+    <!--<ul id="geoData">
+        <li>Full Address: <span id="location"></span></li>
+        <li>Postal Code: <span id="postal_code"></span></li>
+        <li>Country: <span id="country"></span></li>
+        <li>Latitude: <span id="lat"></span></li>
+        <li>Longitude: <span id="lon"></span></li>
+    </ul>
+    <div id="accommodation">
+        <img src="./Pins/Accommodation.png" onclick="func('acc')"/>
+        <img src="./Pins/Motorhome.png"/>
+        <img src="./Pins/transportation.png"/>
+    </div>-->
+    
+    <!--<button onclick="getResult()">Get Result</button>-->
+    <script type="text/javascript" src="./jquery/jquery-1.8.3.min.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="./bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./bootstrap/js/jquery.timepicker.js"></script>
+    <script type="text/javascript" src="./bootstrap/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="jquery/jquery.form.min.js"></script>
+<!--<script type="text/javascript" src="./bootstrap/js/locales/bootstrap-datetimepicker.fr.js" charset="UTF-8"></script>-->
+<script>
+    var current_marker;
+    var marker_objects = [];
+    var Pins = [];
+    var marker;
+    var map;
+    var infowindow;
+    var input = document.getElementById('searchInput');
+    $(".info_image").hide();
+    
+    
+
+    </script>
+<script type="text/javascript">
+function date_init()
+{
+    var times = new Date();
+    document.getElementById("depart_t").value =  ((times.getHours())   < 10 ? '0' + times.getHours()   : times.getHours()) + ':' + 
+                                ((times.getMinutes()) < 10 ? '0' + times.getMinutes() : times.getMinutes());
+    document.getElementById("arrive_t").value =  ((times.getHours())   < 10 ? '0' + times.getHours()   : times.getHours()) + ':' + 
+                                ((times.getMinutes()) < 10 ? '0' + times.getMinutes() : times.getMinutes());
+}
+function commentChange(str)
+{
+    marker_objects[current_marker].comment = document.getElementById("comment_content").value; 
+}
+$(document).ready(function() { 
+    $(function() {
+        
+        $('#depart_t').timepicker({ 'scrollDefault': 'now' });
+        $('#depart_t').on('changeTime', function() {
+            marker_objects[current_marker].start_time=$(this).val();
+        });
+        $('#arrive_t').timepicker({ 'scrollDefault': 'now' });
+        $('#arrive_t').on('changeTime', function() {
+            marker_objects[current_marker].end_time=$(this).val();
+        });
+        date_init();
+    });
+    
+	var options = { 
+			target:   '#output',   // target element(s) to be updated with server response 
+			beforeSubmit:  beforeSubmit,  // pre-submit callback 
+			success:       afterSuccess,  // post-submit callback 
+			uploadProgress: OnProgress, //upload progress callback 
+			resetForm: true        // reset the form after successful submit 
+		}; 
+		
+	 $('#MyUploadForm').submit(function() { 
+			$(this).ajaxSubmit(options);  			
+			// always return false to prevent standard browser submit and page navigation 
+			return false; 
+		}); 
+		
+
+//function after succesful file upload (when server response)
+function afterSuccess()
+{
+	$('#submit-btn').show(); //hide submit button
+	$('#loading-img').hide(); //hide submit button
+	$('#progressbox').delay( 1000 ).fadeOut(); //hide progress bar
+    if(marker_objects.length>0)
+    {
+        marker_objects[marker_objects.length-1].file = document.getElementById("output").innerHTML;
+        document.getElementById("out_image").src=marker_objects[marker_objects.length-1].file;
+    }
+    console.log(marker_objects[marker_objects.length-1].file);
+}
+
+//function to check file size before uploading.
+function beforeSubmit(){
+    //check whether browser fully supports all File API
+   if (window.File && window.FileReader && window.FileList && window.Blob)
+	{
+		
+		if( !$('#FileInput').val()) //check empty input filed
+		{
+			$("#output").html("Are you kidding me?");
+			return false
+		}
+		
+		var fsize = $('#FileInput')[0].files[0].size; //get file size
+		var ftype = $('#FileInput')[0].files[0].type; // get file type
+		
+
+		//allow file types 
+		switch(ftype)
+        {
+            case 'image/png': 
+			case 'image/gif': 
+			case 'image/jpeg': 
+			case 'image/pjpeg':
+			case 'text/plain':
+			case 'text/html':
+			case 'application/x-zip-compressed':
+			case 'application/pdf':
+			case 'application/msword':
+			case 'application/vnd.ms-excel':
+			case 'video/mp4':
+                break;
+            default:
+                $("#output").html("<b>"+ftype+"</b> Unsupported file type!");
+				return false
+        }
+		
+		//Allowed file size is less than 5 MB (1048576)
+		if(fsize>5242880) 
+		{
+			$("#output").html("<b>"+bytesToSize(fsize) +"</b> Too big file! <br />File is too big, it should be less than 5 MB.");
+			return false
+		}
+				
+		$('#submit-btn').hide(); //hide submit button
+		$('#loading-img').show(); //hide submit button
+		$("#output").html("");  
+	}
+	else
+	{
+		//Output error to older unsupported browsers that doesn't support HTML5 File API
+		$("#output").html("Please upgrade your browser, because your current browser lacks some new features we need!");
+		return false;
+	}
+}
+
+//progress bar function
+function OnProgress(event, position, total, percentComplete)
+{
+    //Progress bar
+	$('#progressbox').show();
+    $('#progressbar').width(percentComplete + '%') //update progressbar percent complete
+    $('#statustxt').html(percentComplete + '%'); //update status text
+    if(percentComplete>50)
+        {
+            $('#statustxt').css('color','#000'); //change status text to white after 50%
+        }
+}
+
+//function to format bites bit.ly/19yoIPO
+function bytesToSize(bytes) {
+   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+   if (bytes == 0) return '0 Bytes';
+   var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+   return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+}
+
+}); 
+
+</script>
+
+    <script>
+    var obj ;
+    var name;
+    var file_data;
+    var form_data={};
+    function upload()
+    {
+        obj = document.getElementById('fileToUpload');
+        name = document.getElementById('markerfile');
+        
+        
+        // file_data = $('#fileToUpload').prop('files')[0];
+        form = document.getElementById("form1");
+        form_data = new FormData(form);                  
+        // form_data.append('file', "SDF");
+        // console.log(file_data);
+        for (var p of form_data) {
+        console.log(p);
+        }    
+        save();
+    }
+    function save()
+    {
+        // console.log( obj.files[0]);
+        $.ajax({ url: "handler.php",
+            dataType: 'text',
+            // data: {name: obj.files[0].name, size:obj.files[0].size, type: obj.files[0].type, markerfile: name},
+            data: form_data,
+            type: 'post',
+            susuccess: function(php_script_response){
+                    alert(php_script_response); // display response from the PHP script, if any
+                }
+        });
+    }
+
+    </script>
+    <script>
+    function ToYesterday(){
+        // $(".datetimepicker.datetimepicker-dropdown-bottom-right.dropdown-menu").hide();
+        var someday = new Date($("#before_datetime").find("input").val());
+        $("#form_datetime").data('datetimepicker').setDate(new Date(someday));
+        changeDate();
+        date_changed();
+    }
+    function ToTomorrow(){
+        // $(".datetimepicker.datetimepicker-dropdown-bottom-right.dropdown-menu").hide();
+        var someday = new Date($("#next_datetime").find("input").val());
+        $("#form_datetime").data('datetimepicker').setDate(new Date(someday));
+        changeDate();
+        date_changed();
+    }
+    function ToToday(){
+       
+    }
+    function pinToggle(checkbox)
+    {
+        // initMap();
+        // console.log(marker_objects[0]);
+        // console.log(marker_objects[0].marker);
+        if (checkbox.checked)
+        {
+            for (i=0; i<marker_objects.length; i++)
+            {
+                marker_objects[i].marker.marker.setVisible(true);              
+            }
+        }
+        else
+        {
+            hideAll();
+        }
+        
+    }
+    function hideAll()
+    {
+        for (i=0; i<marker_objects.length; i++)
+        {
+            marker_objects[i].marker.marker.setVisible(false);
+            
+        }
+    }
+    function hideLineAll()
+    {
+        for (i=1; i<marker_objects.length; i++)
+        {
+            marker_objects[i].linemarker.setVisible(false); 
+            marker_objects[i].line.setVisible(false); 
+        }
+    }
+    function transportationToggle(checkbox)
+    {
+        if (checkbox.checked)
+        {
+            for (i=1; i<marker_objects.length; i++)
+            {
+                console.log(marker_objects[i]);
+                // marker_objects[i].linemarker.setIcon(marker_objects[i].marker.transportation);
+                marker_objects[i].linemarker.setVisible(true);
+                marker_objects[i].line.setVisible(true);                  
+            }
+        }
+        else
+        {
+            hideLineAll();
+        }
+    }
+    function accommodationToggle(checkbox)
+    {
+        if (checkbox.checked)
+        {
+            for (i=0; i<marker_objects.length; i++)
+            {
+                marker_objects[i].marker.marker.setIcon({
+                    url: marker_objects[i].marker.accommodation,
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(70, 35)
+                });
+                marker_objects[i].marker.marker.setVisible(true);              
+            }
+        }
+        else
+        {
+            pinToggle($("#pintoggle"));
+        }
+    }
+    function activityToggle(checkbox)
+    {
+        if (checkbox.checked)
+        {
+            for (i=0; i<marker_objects.length; i++)
+            {
+                marker_objects[i].marker.marker.setIcon({
+                    url: marker_objects[i].marker.activity,
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(70, 35)
+                });
+
+                marker_objects[i].marker.marker.setVisible(true);              
+            }
+        }
+        else
+        {
+            pinToggle($("#pintoggle"));
+        }
+    }
+    function getResult()
+    {
+        
+    }
+
+    $('#before_datetime').datetimepicker({
+        weekStart: 1,
+		autoclose: 1,
+		todayHighlight: 1,
+		startView: 2,
+		minView: 2,
+		forceParse: 0
+    });
+
+    $('#next_datetime').datetimepicker({
+        weekStart: 1,
+		autoclose: 1,
+		todayHighlight: 1,
+		startView: 2,
+		minView: 2,
+		forceParse: 0
+    });
+    $('#form_datetime').datetimepicker({
+        weekStart: 1,
+        todayBtn:  1,
+		autoclose: 1,
+		todayHighlight: 1,
+		startView: 2,
+		minView: 2,
+		forceParse: 0
+    }).on("change.dp", function(e) {
+        date_changed();
+    });
+    function date_changed()
+    {
+        // initMap();
+        //hideAll();
+        $(".info_image").hide();
+        document.getElementById("current_place").innerHTML="Place of Name";
+        document.getElementById("comment_content").value="";
+        document.getElementById("out_image").src="";
+        document.getElementById("depart_t").value = "12:00";
+        document.getElementById("arrive_t").value = "12:00";
+        var someday = new Date($("#form_datetime").find("input").val());
+        // console.log(marker_objects.length);
+        for(i=0; i <marker_objects.length; i++)
+        {
+            // console.log(new Date(marker_objects[i].date).getTime() == someday.getTime());
+            // console.log(someday);
+            if(new Date(marker_objects[i].date).getTime() == someday.getTime())
+            {
+                
+                // console.log(marker_objects[i].marker);
+                // var marker = new google.maps.Marker({
+                //     map: map,
+                //     anchorPoint: new google.maps.Point(0, -29)
+                // });
+                // marker.setVisible(false);
+                // marker.setIcon(({
+                //     url: "Pins/bluepin.png",
+                //     size: new google.maps.Size(71, 71),
+                //     origin: new google.maps.Point(0, 0),
+                //     anchor: new google.maps.Point(17, 34),
+                //     scaledSize: new google.maps.Size(35, 35)
+                // }));
+                // marker.setPosition(marker_objects[i].marker.position);
+                // marker.setVisible(true);
+                marker_objects[i].marker.marker.setIcon(({
+                    url: "Pins/bluepin.png",
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(35, 35)
+                }));
+                current_marker = i;
+                //  {'marker':{'marker':marker,  'url': place.icon, 'position': place.geometry.location, 'accommodation':'', 'transportation':'', 'activity':''},'comment':'', 'date':someday, 'time':'', 'line':'', 'linemarker':'', 'file':'', "start_time":document.getElementById("depart_t").value,"end_time":document.getElementById("arrive_t").value};
+                 document.getElementById("depart_t").value = marker_objects[i].start_time;
+                 document.getElementById("arrive_t").value = marker_objects[i].end_time;
+                 document.getElementById("comment_content").value = marker_objects[current_marker].comment;
+                 document.getElementById("current_place").innerHTML = marker_objects[i].name;
+                 document.getElementById("comment_content").value = marker_objects[i].comment;
+                 document.getElementById("out_image").src= marker_objects[i].file; 
+                 map.setCenter(marker_objects[i].marker.position);
+            }
+        }
+        changeDate();
+    }
+    $("#form_datetime").data('datetimepicker').setDate(new Date());
+    changeDate();
+    init_calendar();
+    function init_calendar()
+    {
+        // $("#set_time").hide();
+        $(".datetimepicker.datetimepicker-dropdown-bottom-right.dropdown-menu").get(0).style.visibility='hidden';
+        var obj=$(".datetimepicker.datetimepicker-dropdown-bottom-right.dropdown-menu").get(0);
+        var objs=$(obj.getElementsByClassName("glyphicon icon-arrow-left"));
+        for(var i=0; i< objs.length; i++)
+        {
+            objs[i].style.visibility='hidden';
+        };
+        objs=$(obj.getElementsByClassName("glyphicon icon-arrow-right"));
+        for(var i=0; i< objs.length; i++)
+        {
+            objs[i].style.visibility='hidden';
+        }
+        $(".datetimepicker.datetimepicker-dropdown-bottom-right.dropdown-menu").get(1).style.visibility='hidden';
+        obj=$(".datetimepicker.datetimepicker-dropdown-bottom-right.dropdown-menu").get(1);
+        objs=$(obj.getElementsByClassName("glyphicon icon-arrow-left"));
+        for(var i=0; i< objs.length; i++)
+        {
+            objs[i].style.visibility='hidden';
+        };
+        objs=$(obj.getElementsByClassName("glyphicon icon-arrow-right"));
+        for(var i=0; i< objs.length; i++)
+        {
+            objs[i].style.visibility='hidden';
+        }
+    }
+    function changeDate(){
+        var someday = new Date($("#form_datetime").find("input").val());
+        var yesterday = new Date(someday.getTime());
+        yesterday.setDate(someday.getDate() - 1);
+        var tomorrow = new Date(someday.getTime());
+        tomorrow.setDate(someday.getDate() + 1);
+        $("#before_datetime").data('datetimepicker').setDate(yesterday);
+        $("#next_datetime").data('datetimepicker').setDate(tomorrow);
+        
+    }
+    function setTime()
+    {
+        // $("#set_time").hide();
+        var length = marker_objects.length;
+        marker_objects[length-2].time = $("#depart_t").val();
+        marker_objects[length-1].time = $("#arrive_t").val();
+    }
+    function func(str,i){
+        infowindow.close();
+        var temp=marker_objects[i-1].marker.url;
+        temp=temp.substring(0,temp.length-7);
+        console.log(str);
+        if(str == "accommodation")
+        {
+            marker_objects[i-1].marker.accommodation = temp+str+".png";
+            $("#info_acc").show();
+        }
+        if(str== "activity")
+        {
+            marker_objects[i-1].marker.activity = temp+str+".png";
+            $("#info_act").show();
+        }
+        if(str== "transportation")
+        {
+            marker_objects[i-1].marker.transportation = temp+str+".png";
+            $("#info_trans").show();
+        }
+        console.log(marker_objects[i-1].marker.accommodation);
+        marker_objects[i-1].marker.marker.setIcon(({
+            url: temp+str+".png",
+            size: new google.maps.Size(142, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(17, 34),
+            scaledSize: new google.maps.Size(70, 35)
+        }));
+        if(str == "transportation")
+        {
+            infowindow.setContent(`<div id="transportation">
+                                    <img src="Pins/Train.png" onclick="setTransportation('Train',`+ i +`)"/>
+                                    <img src="Pins/tram.png"  onclick="setTransportation('tram',`+ i +`)"/>
+                                    <img src="Pins/Coach.png"  onclick="setTransportation('Coach',`+ i +`)"/>
+                                    <img src="Pins/Cruise ship.png"  onclick="setTransportation('Cruise ship',`+ i +`)"/>
+                                    <img src="Pins/Plane.png"  onclick="setTransportation('Plane',`+ i +`)"/>
+                                    <img src="Pins/Bike.png" onclick="setTransportation('Bike',`+ i +`)"/>
+                                    <img src="Pins/Driver.png" onclick="setTransportation('Driver',`+ i +`)"/>
+                                    <img src="Pins/Ferry.png" onclick="setTransportation('Ferry',`+ i +`)"/>
+                                    <img src="Pins/Motorhome.png" onclick="setTransportation('Motorhome',`+ i +`)"/>
+                                    <img src="Pins/Rental car.png" onclick="setTransportation('Rental car',`+ i +`)"/>
+                                    <img src="Pins/Ride share.png" onclick="setTransportation('Ride share',`+ i +`)"/>
+                                </div>`);
+            infowindow.open(map, marker);
+        }
+        
+    }
+function setTransportation(str,i){
+    infowindow.close();
+    marker_objects[i-1].marker.transportation ="Pins/"+str+".png";
+    console.log(marker_objects[i-1].marker.transportation);
+    if(i>1)
+    {
+        var lineSymbol = {
+          path: 'M 0,-1 0,1 z',
+          strokeOpacity: 1,
+          scale: 4
+        };
+        var lineSymbol1 = {
+            path: google.maps.SymbolPath.FORWARD_OPEN_ARROW,
+            strokeOpacity: 1
+            };
+        var lineSymbol2 = {
+            path: 'M 0,-1 0,1 z',
+            strokeOpacity: 0,
+            scale: 4
+            };
+        var line = new google.maps.Polyline({
+                path: [marker_objects[i-2].marker.position, marker_objects[i-1].marker.position],
+                // strokeOpacity: 0,
+                icons: [
+                {
+                    icon: lineSymbol1
+         
+                }
+
+                ],
+                map: map
+                });
+            var marker = new google.maps.Marker({
+                    map: map,
+                    anchorPoint: new google.maps.Point(0, -29)
+                });
+            marker.setVisible(false);
+            marker.setIcon(({
+                url: marker_objects[i-1].marker.transportation,
+                // url: 'Pins/Driver.png',
+                size: new google.maps.Size(71, 71),
+                origin: new google.maps.Point(0, 0),
+                anchor: new google.maps.Point(17, 34),
+                scaledSize: new google.maps.Size(35, 35)
+            }));
+            
+            var lat=(marker_objects[i-1].marker.position.lat() + marker_objects[i-2].marker.position.lat())/2;
+            var lng=(marker_objects[i-1].marker.position.lng() + marker_objects[i-2].marker.position.lng())/2;
+            marker.setPosition({lat: lat, lng: lng});
+            marker_objects[i-1].line = line;
+            marker_objects[i-1].linemarker = marker;
+            marker.setVisible(true);
+            console.log(marker_objects[i-1].linemarker);
+            // var x = document.getElementById('map').offsetWidth /2;
+            // var y = document.getElementById('map').offsetHeight /2;
+        //    $("#set_time").attr('style','left:'+x+'px;top:'+y+'px;');
+    }
+}
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: {lat: -33.8688, lng: 151.2195},
+      zoom: 10
+    });
+    
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
+    
+    var autocomplete = new google.maps.places.Autocomplete(input);
+    // autocomplete.bindTo('bounds', map);
+
+    infowindow = new google.maps.InfoWindow();
+    
+
+    
+    autocomplete.addListener('place_changed', function() {
+        infowindow.close();
+        console.log("SDF");
+        document.getElementById("depart_t").disabled = false;
+        document.getElementById("arrive_t").disabled = false;
+        document.getElementById("comment_content").disabled = false;
+        document.getElementById("FileInput").disabled = false;
+        document.getElementById("submit-btn").disabled = false;
+
+        $(".info_image").hide();
+        date_init();
+        var marker = new google.maps.Marker({
+            map: map,
+            anchorPoint: new google.maps.Point(0, -29)
+        });
+        marker.setVisible(false);
+        var place = autocomplete.getPlace();
+        if (!place.geometry) {
+            window.alert("Autocomplete's returned place contains no geometry");
+            return;
+        }
+        // console.log(place.geometry.location);
+        // If the place has a geometry, then present it on a map.
+        if (place.geometry.viewport) {
+            // map.fitBounds(place.geometry.viewport);
+        } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(10);
+        }
+        var today = new Date();
+        // var dd = today.getDate();
+        // var mm = today.getMonth()+1; //January is 0!
+        // var day = today.getDay();
+        // var yyyy = today.getFullYear();
+        // if(dd<10){
+        //     dd='0'+dd;
+        // } 
+        // if(mm<10){
+        //     mm='0'+mm;
+        // } 
+        // var today =day+", "+ mm+' '+dd+' '+yyyy;//DD, MM dd yyyy
+        
+        today.setHours(0);
+        today.setMilliseconds(0);
+        today.setMinutes(0);
+        today.setSeconds(0);
+
+        var someday = new Date($("#form_datetime").find("input").val());
+
+        place.icon = "Pins/todaypin.png"
+        if(someday < today)
+        {
+            place.icon = "Pins/bluepin.png"
+        }
+        if(someday > today)
+        {
+            place.icon = "Pins/yellowpin.png"
+        }
+        
+        marker.setIcon(({
+            url: place.icon,
+            size: new google.maps.Size(71, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(17, 34),
+            scaledSize: new google.maps.Size(35, 35)
+        }));
+        marker.setPosition(place.geometry.location);
+        
+        marker.setVisible(true);
+        // console.log(marker);
+        
+        var marker_object = {'marker':{'marker':marker,  'url': place.icon, 'position': place.geometry.location, 'accommodation':'', 'transportation':'', 'activity':''},'comment':'', 'date':someday, 'time':'', 'line':'', 'linemarker':'', 'file':'', "start_time":document.getElementById("depart_t").value,"end_time":document.getElementById("arrive_t").value, "name": place.formatted_address};
+        marker_objects.push(marker_object);
+        current_marker = marker_objects.length-1;
+        document.getElementById("current_place").innerHTML=marker_objects[current_marker].name;
+        map.setCenter(place.geometry.location);
+        var address = '';
+        if (place.address_components) {
+            address = [
+              (place.address_components[0] && place.address_components[0].short_name || ''),
+              (place.address_components[1] && place.address_components[1].short_name || ''),
+              (place.address_components[2] && place.address_components[2].short_name || '')
+            ].join(' ');
+        }
+    
+        infowindow.setContent(`<div id="accommodation">
+                                <img src="Pins/Accommodation.png" onclick="func('accommodation',`+marker_objects.length+`)"/>
+                                <img src="Pins/Activity.png"  onclick="func('activity',`+marker_objects.length+`)"/>
+                                <img src="Pins/transportation.png"  onclick="func('transportation',`+marker_objects.length+`)"/>
+                            </div>`);
+        infowindow.open(map, marker);
+      
+        //Location details
+        // for (var i = 0; i < place.address_components.length; i++) {
+        //     if(place.address_components[i].types[0] == 'postal_code'){
+        //         document.getElementById('postal_code').innerHTML = place.address_components[i].long_name;
+        //     }
+        //     if(place.address_components[i].types[0] == 'country'){
+        //         document.getElementById('country').innerHTML = place.address_components[i].long_name;
+        //     }
+        // }
+        // document.getElementById('location').innerHTML = place.formatted_address;
+        // document.getElementById('lat').innerHTML = place.geometry.location.lat();
+        // document.getElementById('lon').innerHTML = place.geometry.location.lng();
+       
+    });
+
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyBPn30XrkqMsOUFKDuoKL6WrrVzftnz_LY&libraries=places&callback=initMap" async defer></script>
+</body>
